@@ -22,9 +22,9 @@ namespace QuickFix.DataDictionary
 		public bool CheckFieldsOutOfOrder { get; set; }
 		public bool CheckFieldsHaveValues { get; set; }
 		public bool CheckUserDefinedFields { get; set; }
-        public bool AllowUnknownMsgFields { get; set; }
+		public bool AllowUnknownMsgFields { get; set; }
 
-        public DDMap Header = new DDMap();
+		public DDMap Header = new DDMap();
 		public DDMap Trailer = new DDMap();
 
 		public DataDictionary()
@@ -74,8 +74,8 @@ namespace QuickFix.DataDictionary
 			this.CheckFieldsOutOfOrder = src.CheckFieldsOutOfOrder;
 			this.CheckUserDefinedFields = src.CheckUserDefinedFields;
 			this.Header = src.Header;
-            this.AllowUnknownMsgFields = src.AllowUnknownMsgFields;
-            this.Trailer = src.Trailer;
+			this.AllowUnknownMsgFields = src.AllowUnknownMsgFields;
+			this.Trailer = src.Trailer;
 		}
 
 		public static void Validate(Message message, DataDictionary sessionDataDict, DataDictionary appDataDict, string beginString, string msgType)
@@ -413,9 +413,9 @@ namespace QuickFix.DataDictionary
 		{
 			if (!this.CheckUserDefinedFields && (field.Tag >= Fields.Limits.USER_MIN))
 				return false;
-            if (this.AllowUnknownMsgFields && (field.Tag < Fields.Limits.USER_MIN))
-                return false;
-            return true;
+			if (this.AllowUnknownMsgFields && (field.Tag < Fields.Limits.USER_MIN))
+				return false;
+			return true;
 		}
 
 		public bool IsHeaderField(int tag)
