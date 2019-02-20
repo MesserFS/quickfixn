@@ -23,8 +23,21 @@ steps:
     solution: '$(solution)'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
+    msbuildArgs: '/p:RunOctoPack=true /p:OctoPackPackageVersion=$(Build.BuildNumber)'
 
 - task: VSTest@2
   inputs:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
+
+- task: CopyFiles@2
+  inputs:
+    sourceFolder: '**/bin/$(buildConfiguration)' # Optional
+    contents: '**/*.nupkg'
+    targetFolder:  '$(Build.ArtifactStagingDirectory)'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: 'packages'
+    publishLocation: 'Container' # Options: container, filePath
