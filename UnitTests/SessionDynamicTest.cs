@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.IO;
 using System.Threading;
 using System.Net;
 using System.Net.Sockets;
@@ -66,8 +65,7 @@ namespace UnitTests
         const string FIXMessageEnd = @"\x0110=\d{3}\x01";
         const string FIXMessageDelimit = @"(8=FIX|\A).*?(" + FIXMessageEnd + @"|\z)";
 
-        const string LogPath = "log";
-
+        string _logPath;
         SocketInitiator _initiator;
         ThreadedSocketAcceptor _acceptor;
         Dictionary<string, SocketState> _sessions;
@@ -113,7 +111,7 @@ namespace UnitTests
             IMessageStoreFactory storeFactory = new MemoryStoreFactory();
             SessionSettings settings = new SessionSettings();
             Dictionary defaults = new Dictionary();
-            defaults.SetString(QuickFix.SessionSettings.FILE_LOG_PATH, LogPath);
+            defaults.SetString(QuickFix.SessionSettings.FILE_LOG_PATH, _logPath);
 
             // Put IP endpoint settings into default section to verify that that defaults get merged into
             // session-specific settings not only for static sessions, but also for dynamic ones
@@ -189,7 +187,7 @@ namespace UnitTests
                     Monitor.Pulse(socketState._socket);
                 return;
             }
-            string msgText = Encoding.ASCII.GetString(socketState._rxBuffer, 0, bytesReceived);
+            string msgText = CharEncoding.DefaultEncoding.GetString(socketState._rxBuffer, 0, bytesReceived);
             foreach (Match m in Regex.Matches(msgText, FIXMessageDelimit))
             {
                 socketState._messageFragment += m.Value;
@@ -197,8 +195,8 @@ namespace UnitTests
                 {
                     Message message = new Message(socketState._messageFragment);
                     socketState._messageFragment = string.Empty;
-                    string targetCompID = message.Header.GetField(QuickFix.Fields.Tags.TargetCompID);
-                    if (message.Header.GetField(QuickFix.Fields.Tags.MsgType) == QuickFix.Fields.MsgType.LOGON)
+                    string targetCompID = message.Header.GetString(QuickFix.Fields.Tags.TargetCompID);
+                    if (message.Header.GetString(QuickFix.Fields.Tags.MsgType) == QuickFix.Fields.MsgType.LOGON)
                         lock (_sessions)
                         {
                             _sessions[targetCompID] = socketState;
@@ -298,15 +296,16 @@ namespace UnitTests
             msg.Header.SetField(new QuickFix.Fields.MsgSeqNum(1));
             msg.Header.SetField(new QuickFix.Fields.SendingTime(System.DateTime.UtcNow));
             msg.SetField(new QuickFix.Fields.HeartBtInt(300));
-            s.Send(Encoding.ASCII.GetBytes(msg.ToString()));
+            // Simple logon message
+            s.Send(CharEncoding.DefaultEncoding.GetBytes(msg.ToString()));
         }
 
         void ClearLogs()
         {
-            if (System.IO.Directory.Exists(LogPath))
+            if (System.IO.Directory.Exists(_logPath))
                 try
                 {
-                    System.IO.Directory.Delete(LogPath, true);
+                    System.IO.Directory.Delete(_logPath, true);
                 }
                 catch { }
         }
@@ -314,6 +313,7 @@ namespace UnitTests
         [SetUp]
         public void Setup()
         {
+            _logPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "log");
             _sessions = new Dictionary<string, SocketState>();
             _loggedOnCompIDs = new HashSet<string>();
             ClearLogs();
@@ -434,7 +434,7 @@ namespace UnitTests
             Assert.IsFalse(IsLoggedOn(StaticInitiatorCompID), "Session still logged on after being removed");
 
             // Check that log directory default setting has been effective
-            Assert.Greater(System.IO.Directory.GetFiles(LogPath, QuickFix.Values.BeginString_FIX42 + "*.log").Length, 0); 
+            Assert.Greater(System.IO.Directory.GetFiles(_logPath, QuickFix.Values.BeginString_FIX42 + "*.log").Length, 0); 
         }
     }
 }

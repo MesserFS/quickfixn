@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
 using QuickFix;
+using UnitTests.TestHelpers;
 
 namespace UnitTests
 {
@@ -15,7 +16,7 @@ namespace UnitTests
         public void VersionTest()
         {
             QuickFix.DataDictionary.DataDictionary dd44 = new QuickFix.DataDictionary.DataDictionary();
-            dd44.Load("../../../spec/fix/FIX44.xml");
+            dd44.LoadFIXSpec("FIX44");
             Assert.That(dd44.MajorVersion, Is.EqualTo("4"));
             Assert.That(dd44.MinorVersion, Is.EqualTo("4"));
             Assert.That(dd44.Version, Is.EqualTo("FIX.4.4"));
@@ -25,7 +26,7 @@ namespace UnitTests
         public void LoadFieldsTest()
         {
             QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
-            dd.Load("../../../spec/fix/FIX44.xml");
+            dd.LoadFIXSpec("FIX44");
             Assert.That(dd.FieldsByTag[1].Name, Is.EqualTo("Account"));
             Assert.That(dd.FieldsByName["Account"].Tag, Is.EqualTo(1));
             Assert.That(dd.FieldsByTag[1].EnumDict.Count, Is.EqualTo(0));
@@ -36,7 +37,7 @@ namespace UnitTests
 		public void LoadFieldsFromStreamTest()
 		{
 			QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
-			Stream stream = new FileStream("../../../spec/fix/FIX44.xml", FileMode.Open, FileAccess.Read);
+		    Stream stream = new FileStream(Path.Combine(TestContext.CurrentContext.TestDirectory, "spec", "fix", "FIX44.xml"), FileMode.Open, FileAccess.Read);
 			dd.Load(stream);
 			Assert.That(dd.FieldsByTag[1].Name, Is.EqualTo("Account"));
 			Assert.That(dd.FieldsByName["Account"].Tag, Is.EqualTo(1));
@@ -48,7 +49,7 @@ namespace UnitTests
         public void FieldHasValueTest()
         {
             QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
-            dd.Load("../../../spec/fix/FIX44.xml");
+            dd.LoadFIXSpec("FIX44");
             Assert.That(dd.FieldHasValue(QuickFix.Fields.Tags.StatusValue, "1"), Is.EqualTo(true));
             Assert.That(dd.FieldHasValue(QuickFix.Fields.Tags.StatusValue, "CONNECTED"), Is.EqualTo(false));
             Assert.False(dd.FieldsByTag[1].HasEnums());
@@ -59,7 +60,7 @@ namespace UnitTests
         public void FieldHasDescriptionTest()
         {
             QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
-            dd.Load("../../../spec/fix/FIX44.xml");
+            dd.LoadFIXSpec("FIX44");
             Assert.AreEqual(typeof (Dictionary<string, string>), dd.FieldsByTag[945].EnumDict.GetType());
             Assert.That("COMPLETED", Is.EqualTo(dd.FieldsByTag[945].EnumDict["2"]));
             Assert.AreNotEqual("HEARTBEAT", dd.FieldsByTag[35].EnumDict["A"]);
@@ -69,7 +70,7 @@ namespace UnitTests
         public void BasicMessageTest()
         {
             QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
-            dd.Load("../../../spec/fix/FIX44.xml");
+            dd.LoadFIXSpec("FIX44");
             Assert.That(dd.Messages["3"].Fields.Count, Is.EqualTo(7));
         }
 
@@ -77,7 +78,7 @@ namespace UnitTests
         public void ComponentSmokeTest()
         {
             QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
-            dd.Load("../../../spec/fix/FIX44.xml");
+            dd.LoadFIXSpec("FIX44");
             QuickFix.DataDictionary.DDMap tcr = dd.Messages["AE"];
             Assert.True(tcr.Fields.ContainsKey(55));
             Assert.False(tcr.Fields.ContainsKey(5995));
@@ -87,7 +88,7 @@ namespace UnitTests
         public void GroupTest()
         {
             QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
-            dd.Load("../../../spec/fix/FIX44.xml");
+            dd.LoadFIXSpec("FIX44");
             QuickFix.DataDictionary.DDMap tcrr = dd.Messages["AD"];
             Assert.True(tcrr.IsGroup(711));
             Assert.True(tcrr.IsField(711));  // No Field also a field
@@ -102,7 +103,7 @@ namespace UnitTests
         public void NestedGroupTest()
         {
             QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
-            dd.Load("../../../spec/fix/FIX44.xml");
+            dd.LoadFIXSpec("FIX44");
             QuickFix.DataDictionary.DDMap msgJ = dd.Messages["J"];
 
             Assert.True(msgJ.IsGroup(73));
@@ -111,10 +112,24 @@ namespace UnitTests
         }
 
         [Test]
+        public void GroupBeginsGroupTest()
+        {
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadTestFIXSpec("group_begins_group");
+            QuickFix.DataDictionary.DDMap msg = dd.Messages["magic"];
+            Assert.True(msg.IsGroup(6660)); // NoMagics group
+            Assert.True(msg.GetGroup(6660).IsGroup(7770)); // NoMagics/NoRabbits
+            Assert.True(msg.GetGroup(6660).IsField(6661)); // NoMagics/MagicWord
+            Assert.True(msg.GetGroup(6660).GetGroup(7770).IsField(7711)); // NoMagics/NoRabbits/RabbitName
+            Assert.AreEqual(7770, msg.GetGroup(6660).Delim); // NoMagics delim is NoRabbits counter
+            Assert.AreEqual(7711, msg.GetGroup(6660).GetGroup(7770).Delim); // NoRabbits delim is RabbitName
+        }
+
+        [Test]
         public void HeaderGroupTest()
         {
             QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
-            dd.Load("../../../spec/fix/FIX44.xml");
+            dd.LoadFIXSpec("FIX44");
             QuickFix.DataDictionary.DDMap headerMap = dd.Header;
             Assert.True(headerMap.IsGroup(627));
             QuickFix.DataDictionary.DDGrp grpMap = headerMap.GetGroup(627);
@@ -125,7 +140,8 @@ namespace UnitTests
         [Test]
         public void ReqFldTest()
         {
-            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary("../../../spec/fix/FIX44.xml");
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadFIXSpec("FIX44");
             Assert.True(dd.Messages["AE"].ReqFields.Contains(571));
             Assert.False(dd.Messages["AE"].ReqFields.Contains(828));
         }
@@ -133,7 +149,8 @@ namespace UnitTests
         [Test]
         public void HeaderTest()
         {
-            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary("../../../spec/fix/FIX44.xml");
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadFIXSpec("FIX44");
             Assert.True(dd.Header.ReqFields.Contains(9));
             Assert.That(dd.Header.Fields.Count, Is.EqualTo(27));
         }
@@ -141,7 +158,8 @@ namespace UnitTests
         [Test]
         public void TrailerTest()
         {
-            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary("../../../spec/fix/FIX44.xml");
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadFIXSpec("FIX44");
             Assert.True(dd.Trailer.ReqFields.Contains(10));
             Assert.That(dd.Trailer.Fields.Count, Is.EqualTo(3));
         }
@@ -149,7 +167,8 @@ namespace UnitTests
         [Test]
         public void CheckValidTagTest()
         {
-            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary("../../../spec/fix/FIX44.xml");
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadFIXSpec("FIX44");
             Assert.Throws(typeof(InvalidTagNumber),
                 delegate { dd.CheckValidTagNumber(999); });
         }
@@ -157,7 +176,8 @@ namespace UnitTests
         [Test]
         public void CheckIsInGroupTest()
         {
-            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary("../../../spec/fix/FIX44.xml");
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadFIXSpec("FIX44");
             QuickFix.DataDictionary.DDGrp g = dd.Messages["B"].GetGroup(33);
 
             QuickFix.Fields.Text textField = new QuickFix.Fields.Text("woot");
@@ -170,7 +190,8 @@ namespace UnitTests
         [Test]
         public void CheckGroupCountTest()
         {
-            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary("../../../spec/fix/FIX42.xml");
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadFIXSpec("FIX42");
 
             QuickFix.FIX42.NewOrderSingle n = new QuickFix.FIX42.NewOrderSingle();
 
@@ -194,7 +215,8 @@ namespace UnitTests
         [Test]
         public void ValidateWrongType()
         {
-            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary("../../../spec/fix/FIX44.xml");
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadFIXSpec("FIX44");
             QuickFix.FIX44.MessageFactory f = new QuickFix.FIX44.MessageFactory();
 
             string[] msgFields = {"8=FIX.4.4", "9=120", "35=D", "34=3", "49=sender", "52=20110909-09:09:09.999", "56=target",
@@ -215,7 +237,8 @@ namespace UnitTests
         [Test]
         public void ValidateWithRepeatingGroupTest()
         {
-            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary("../../../spec/fix/FIX42.xml");
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadFIXSpec("FIX42");
             QuickFix.FIX42.MessageFactory f = new QuickFix.FIX42.MessageFactory();
             
             string nul = Message.SOH;
@@ -233,9 +256,45 @@ namespace UnitTests
         }
 
         [Test]
+        public void ValidateGroupBeginsGroup()
+        {
+            // TODO: In a future version, change this so that
+            //       1) generator will generate source for our test DD
+            //       2) this test will use proper type-safe methods and not generics
+            // Probably some or all of this would then move to MessageTests.cs
+
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadTestFIXSpec("group_begins_group");
+
+            string pipedStr = "8=FIX.9.9|9=167|35=magic|34=3|49=CLIENT1|52=20111012-22:15:55.474|56=EXECUTOR|"
+                + "1111=mundane|5555=magicfield|6660=1|7770=2|7711=Hoppy|7712=brown|"
+                + "7711=Floppy|7712=white|6661=abracadabra|10=48|";
+            // note: length and checksum might be garbage
+            string msgStr = pipedStr.Replace("|", Message.SOH);
+
+            string beginString = Message.ExtractBeginString(msgStr);
+            Message msg = new Message(msgStr, dd, false);
+
+            // true param means body-only, i.e. don't validate length/checksum
+            dd.Validate(msg, true, beginString, "magic");
+
+            // Verify can retrieve one of the inner groups.
+            // (Gotta use generic methods because code isn't generated for this DD)
+            Group magicGroup = new Group(6660, 7770, new[] { 7770, 6661 });
+            msg.GetGroup(1, magicGroup);
+            Group rabbitGroup = new Group(7770, 7711, new[] { 7711, 7722 });
+            magicGroup.GetGroup(2, rabbitGroup);
+
+            Assert.AreEqual("abracadabra", magicGroup.GetString(6661));
+            Assert.AreEqual("Floppy", rabbitGroup.GetString(7711));
+            Assert.AreEqual("white", rabbitGroup.GetString(7712));
+        }
+
+        [Test]
         public void ValidateWrongTypeInRepeatingGroup()
         {
-            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary("../../../spec/fix/FIX44.xml");
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadFIXSpec("FIX44");
             QuickFix.FIX44.MessageFactory f = new QuickFix.FIX44.MessageFactory();
 
             string[] msgFields = {"8=FIX.4.4", "9=111", "35=V", "34=3", "49=sender", "52=20110909-09:09:09.999", "56=target",
@@ -259,7 +318,8 @@ namespace UnitTests
         [Test]
         public void ValidateWrongTypeInNestedRepeatingGroup()
         {
-            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary("../../../spec/fix/FIX44.xml");
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadFIXSpec("FIX44");
             QuickFix.FIX44.MessageFactory f = new QuickFix.FIX44.MessageFactory();
 
             string[] msgFields = {"8=FIX.4.4", "9=185", "35=J", "34=3", "49=sender", "52=20110909-09:09:09.999", "56=target",
@@ -284,7 +344,8 @@ namespace UnitTests
         [Test]
         public void ValidateDateAndTimeFields()
         {
-            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary("../../../spec/fix/FIX44.xml");
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadFIXSpec("FIX44");
             QuickFix.FIX44.MessageFactory f = new QuickFix.FIX44.MessageFactory();
 
             string[] msgFields = { "8=FIX.4.4", "9=104", "35=W", "34=3", "49=sender", "52=20110909-09:09:09.999", "56=target",
@@ -312,7 +373,8 @@ namespace UnitTests
         [Test]
         public void ValidateDateTime_Invalid()
         {
-            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary("../../../spec/fix/FIX44.xml");
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadFIXSpec("FIX44");
             QuickFix.FIX44.MessageFactory f = new QuickFix.FIX44.MessageFactory();
 
             // intentionally invalid SendingTime (52/DateTime)
@@ -332,7 +394,8 @@ namespace UnitTests
         [Test]
         public void ValidateDateOnly_Invalid()
         {
-            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary("../../../spec/fix/FIX44.xml");
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadFIXSpec("FIX44");
             QuickFix.FIX44.MessageFactory f = new QuickFix.FIX44.MessageFactory();
 
             // intentionally invalid MDEntryDate (272/DateOnly)
@@ -352,7 +415,8 @@ namespace UnitTests
         [Test]
         public void ValidateTimeOnly_Invalid()
         {
-            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary("../../../spec/fix/FIX44.xml");
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadFIXSpec("FIX44");
             QuickFix.FIX44.MessageFactory f = new QuickFix.FIX44.MessageFactory();
 
             // intentionally invalid MDEntryTime (272/TimeOnly)
@@ -374,7 +438,7 @@ namespace UnitTests
         {
             // If this test throws, it failed.
             QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
-            dd.Load("../../../spec/test/FIX43_dup_enum.xml");
+            dd.LoadTestFIXSpec("FIX43_dup_enum");
         }
 
         [Test]
@@ -383,7 +447,8 @@ namespace UnitTests
             // issue #98 - message erroneously rejected because DD says that
             //   component-required field is missing even though component is not present
 
-            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary("../../../spec/fix/FIX44.xml");
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadFIXSpec("FIX44");
             QuickFix.FIX44.MessageFactory f = new QuickFix.FIX44.MessageFactory();
 
             string[] msgFields = { "8=FIX.4.4", "9=77", "35=AD", "34=3", "49=sender", "52=20110909-09:09:09.999", "56=target",
@@ -402,7 +467,8 @@ namespace UnitTests
         [Test]
         public void RequiredComponentRequiredField()
         {
-            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary("../../../spec/fix/FIX44.xml");
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadFIXSpec("FIX44");
             QuickFix.FIX44.MessageFactory f = new QuickFix.FIX44.MessageFactory();
 
             string[] msgFields = { "8=FIX.4.4", "9=76", "35=7", "34=3", "49=sender", "52=20110909-09:09:09.999", "56=target",
@@ -422,7 +488,8 @@ namespace UnitTests
         [Test]
         public void ComponentFieldsRequirements()
         {
-            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary("../../../spec/fix/FIX44.xml");
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadFIXSpec("FIX44");
             Assert.False(dd.Messages["AD"].ReqFields.Contains(55));
             Assert.True(dd.Messages["7"].ReqFields.Contains(55));
         }
@@ -430,7 +497,8 @@ namespace UnitTests
         [Test]
         public void Issue134_RequiredIsOptional()
         {
-            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary("../../../spec/test/required_is_optional.xml");
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadTestFIXSpec("required_is_optional");
             Assert.True(dd.Messages["magic"].ReqFields.Contains(1111));  //base required field
             Assert.False(dd.Messages["magic"].ReqFields.Contains(5555)); //base optional field
             Assert.False(dd.Messages["magic"].ReqFields.Contains(5556)); //component optional field
@@ -442,7 +510,8 @@ namespace UnitTests
         [Test] // Issue #66
         public void ValidateMultipleValueStringType()
         {
-            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary( "../../../spec/fix/FIX44.xml" );
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadFIXSpec("FIX44");
             QuickFix.FIX44.MessageFactory f = new QuickFix.FIX44.MessageFactory();
 
             string[] msgFields = {"8=FIX.4.4", "9=99", "35=W", "34=3", "49=sender", "52=20110909-09:09:09.999", "56=target",
@@ -463,7 +532,8 @@ namespace UnitTests
         [Test] // Issue #66
         public void ValidateMultipleValueStringType_Invalid()
         {
-            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary( "../../../spec/fix/FIX44.xml" );
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadFIXSpec("FIX44");
             QuickFix.FIX44.MessageFactory f = new QuickFix.FIX44.MessageFactory();
 
             string[] msgFields = {"8=FIX.4.4", "9=99", "35=W", "34=3", "49=sender", "52=20110909-09:09:09.999", "56=target",
@@ -481,10 +551,11 @@ namespace UnitTests
             Assert.That(() => dd.Validate(message, beginString, msgType), Throws.TypeOf<QuickFix.IncorrectTagValue>());
         }
 
-        [Test] // Issue #282 investigation
+        [Test] // Issue #282
         public void ValidateTagSpecifiedWithoutAValue()
         {
-            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary("../../../spec/fix/FIX42.xml");
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadFIXSpec("FIX42");
             QuickFix.FIX44.MessageFactory f = new QuickFix.FIX44.MessageFactory();
 
             string[] msgFields = {"8=FIX.4.2", "9=65", "35=B", "34=3", "49=sender", "52=20110909-09:09:09.999", "56=target",
@@ -502,6 +573,24 @@ namespace UnitTests
 
             dd.CheckFieldsHaveValues = false;
             Assert.DoesNotThrow(delegate { dd.Validate(message, beginString, msgType); });
+        }
+
+        [Test] // Issue #493
+        public void ParseThroughComments()
+        {
+            QuickFix.DataDictionary.DataDictionary dd = new QuickFix.DataDictionary.DataDictionary();
+            dd.LoadTestFIXSpec("comments");
+
+            // The fact that it doesn't throw is sufficient, but we'll do some other checks anyway.
+
+            var logon = dd.GetMapForMessage("A");
+            Assert.True(logon.IsField(108)); // HeartBtInt
+            Assert.True(logon.IsField(9000)); // CustomField
+
+            var news = dd.GetMapForMessage("B");
+            Assert.True(news.IsField(148)); // Headline
+            Assert.True(news.IsGroup(33)); // LinesOfText
+            Assert.True(news.GetGroup(33).IsField(355)); // EncodedText
         }
     }
 }

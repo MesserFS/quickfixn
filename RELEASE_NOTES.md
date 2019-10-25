@@ -8,6 +8,44 @@ QuickFIX/n is a .NET port of QuickFIX, an open source C++ FIX engine.
 What's New
 ----------
 
+### NEXT VERSION:
+* (minor) #469 - Add support for NET Standard 2.0 (jhickson)
+* (minor) #476 - Separate FIX message assemblies from the main project (akamyshanov)
+* (minor) #482 - x64 support (brobits)
+* (patch) #486 - More informative exception for DD parsing errors (gbirchmeier)
+* (patch) #492 - fix delete-generated script (gbirchmeier)
+* (patch) #493 - fix DD parsing issue with certain comments (gbirchmeier)
+* (minor) #448 - Fix message load error within \*nix environments (mtnbiker99)
+* (minor) #497 - Support full cross-platform operation (michaelwilner)
+* (patch) #498 - Fix hanging on ThreadedSocketReactor exit (michaelwilner)
+* (minor) #489 - fixes for DefaultMessageFactory / FIX50sp1/2 (gbirchmeier)
+* (patch) #499 - fix bug in SessionState MessageQueue (vigzel)
+* (minor) #507 - better feedback for "Incorrect BeginString" errors (gbirchmeier)
+* (minor) #521 - fix misspelled session reject reason (vpfau)
+* (minor) #524 - add tunnel support; expand cert store search to include LocalMachine (nileshwagel/gbirchmeier)
+* (minor) #531 - change encoding to iso-8859-1 (aka latin1) (amibar/gbirchmeier)
+* (patch) #532 - bug in #524: don't attempt non-.NET-Core-supported functionality (gbirchmeier)
+* (patch) #533 - file maintenance (gbirchmeier)
+* (patch) #509 - Consistent sessionID argument name in IApplication (eugbaranov)
+* (patch) #296 - make FieldMap.GetField obsolete; favor .GetString instead (staffanu)
+* (patch) #478 - eliminate unnecessary string/byte flip-flop (gbirchmeier)
+* (patch) #473 - correct ordering of fields in message trailer (Ieshaj/gbirchmeier)
+* (patch) #513 - Allow groups where the first entry is a group (twoi/gbirchmeier)
+
+### v1.8.0:
+* (patch) #402 - Multithreading fix to please NUnit 2.6.3 and above (arkadiuszwojcik)
+* (patch) #406 - Remove xslt (brobits)
+* (patch) #417 - Bring unit tests up-to-date with NUnit v3.4.1 (zherr)
+* (minor) #418 - Target .NET 4.5 (zherr)
+* (minor) #419 - Atrun dep removal (zherr)
+* (minor) #421 - added class for web interface (mohit-kumar-3pillar)
+* (minor) #425 - Updating DateTimeConverter to be able to convert between microseconds (huwmongoose)
+* (patch) #428 - lock down nokogiri version (cbusbey)
+* (minor) #444 - generator doc update + deletion script (gbirchmeier)
+* (patch) #445 - remove wonky whitespace from generated message classes (gbirchmeier)
+* (minor) #459 - Nanosecond support for QuickFIX timestamp fields (brobits)
+* (patch) #463 - adds fix50sp1-sp2 to FixMessages proj, fixes generator bug (cbusbey)
+
 ### v1.7.0: 
 * (patch) #276 - SSL Fixes (akamyshanov)
 * (minor) #292 - Allow To Set Several Fields At The Same Time (tix52)
