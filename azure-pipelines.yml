@@ -23,3 +23,9 @@ steps:
     command: build
     projects: '$(solution)'
     arguments: '--configuration $(buildConfiguration) -f netstandard2.0'
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: test
+    projects: '**/*Tests.csproj'
+    arguments: '--configuration $(buildConfiguration) -f netcoreapp2.0'
