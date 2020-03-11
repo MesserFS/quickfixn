@@ -150,7 +150,7 @@ namespace QuickFix
         }
 
         /// <summary>
-        /// FIXME get socket options from SessionSettings
+        /// Apply socket options from settings
         /// </summary>
         /// <param name="client"></param>
         /// <param name="socketSettings"></param>
@@ -165,6 +165,14 @@ namespace QuickFix
             if (socketSettings.SocketSendBufferSize.HasValue)
             {
                 client.SendBufferSize = socketSettings.SocketSendBufferSize.Value;
+            }
+            if (socketSettings.SocketReceiveTimeout.HasValue)
+            {
+                client.ReceiveTimeout = socketSettings.SocketReceiveTimeout.Value;
+            }
+            if (socketSettings.SocketSendTimeout.HasValue)
+            {
+                client.SendTimeout = socketSettings.SocketSendTimeout.Value;
             }
         }
 
