@@ -117,6 +117,7 @@ namespace QuickFix
                     case QuickFix.FIX44.NetworkStatusRequest.MsgType: return new QuickFix.FIX44.NetworkStatusRequest();
                     case QuickFix.FIX44.NetworkStatusResponse.MsgType: return new QuickFix.FIX44.NetworkStatusResponse();
                     case QuickFix.FIX44.CollateralInquiryAck.MsgType: return new QuickFix.FIX44.CollateralInquiryAck();
+                    case QuickFix.FIX44.XMLMessage.MsgType: return new QuickFix.FIX44.XMLMessage();
                 }
 
                 return new QuickFix.Message();
